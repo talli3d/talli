@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Talli – saving link</title>
+<style>
+:root{--ink:#14201d;--muted:#5b6b67;--teal:#0f766e;--bg:#f4f6f5;--card:#fff}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.box{max-width:420px;margin:0 auto;padding:22px 16px;text-align:center}
+.big{font-size:34px;line-height:1;color:var(--teal);margin-bottom:8px}
+h1{font-size:18px;margin:0 0 6px}
+p{color:var(--muted);margin:0 0 14px}
+code{display:block;background:var(--card);border-radius:10px;padding:10px;word-break:break-all;font-size:13px;margin-bottom:12px}
+button{font:inherit;border:0;border-radius:10px;background:var(--teal);color:#fff;padding:10px 18px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="box" id="box"><p>Saving link…</p></div>
+<script>
+// Opened by the Talli form: encrypts the quote/invoice details with the link key and stores them in the Talli link store.
+var FORM = "https://docs.google.com/forms/d/e/1FAIpQLSe5gfmV0amFX-zM1GPi7EsPbuITcDwwCSThS9shpLYF-f63Fw/formResponse";
+var E_ID = "entry.448647656", E_DATA = "entry.1838359332";
+var box = document.getElementById("box");
+var h = new URLSearchParams(location.hash.slice(1)), k = h.get("t") || "", d = h.get("d") || "", base = h.get("b") || "";
+history.replaceState(null, "", location.pathname);
+
+function sha(s){ return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function(b){ return new Uint8Array(b); }); }
+function hex(u){ return Array.prototype.map.call(u, function(x){ return ("0" + x.toString(16)).slice(-2); }).join(""); }
+function b64(u){ var s = ""; for(var i = 0; i < u.length; i += 8192) s += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return btoa(s); }
+function fail(msg){ box.innerHTML = '<div class="big">!</div><h1>Couldn\'t save the link</h1><p>' + msg + '</p><button onclick="location.reload()">Try again</button>'; }
+
+if(!/^[A-Za-z0-9]{12}$/.test(k) || !d) fail("This page is opened by the Talli form. Go back and press the button again.");
+else {
+  var json;
+  try{
+    var b = d.replace(/-/g, "+").replace(/_/g, "/"); while(b.length % 4) b += "=";
+    json = decodeURIComponent(escape(atob(b))); JSON.parse(json);
+  }catch(e){ json = null; }
+  if(!json) fail("The details didn't arrive complete.");
+  else Promise.all([sha("talli-id:" + k), sha("talli-key:" + k)]).then(function(r){
+    var id = hex(r[0]).slice(0, 24);
+    return crypto.subtle.importKey("raw", r[1], "AES-GCM", false, ["encrypt"]).then(function(key){
+      var iv = crypto.getRandomValues(new Uint8Array(12));
+      return crypto.subtle.encrypt({name:"AES-GCM", iv:iv}, key, new TextEncoder().encode(json)).then(function(ct){
+        var all = new Uint8Array(12 + ct.byteLength); all.set(iv, 0); all.set(new Uint8Array(ct), 12);
+        var body = new URLSearchParams(); body.append(E_ID, id); body.append(E_DATA, b64(all));
+        return fetch(FORM, {method:"POST", mode:"no-cors", body:body});
+      });
+    });
+  }).then(function(){
+    var link = (/^https:\/\/[^\s?#]+$/.test(base) ? base : location.origin + location.pathname.replace(/s\.html$/, "")) + "?k=" + k;
+    box.innerHTML = '<div class="big">&#10003;</div><h1>Link saved</h1><p>Your client can open it now.</p><code id="lk"></code><button id="cp">Copy link</button><p id="cl" style="margin-top:12px"></p>';
+    document.getElementById("lk").textContent = link;
+    document.getElementById("cp").onclick = function(){ navigator.clipboard.writeText(link).then(function(){ document.getElementById("cp").textContent = "Copied"; }); };
+    if(window.opener){ document.getElementById("cl").textContent = "This window closes by itself."; setTimeout(function(){ window.close(); }, 1500); }
+    else document.getElementById("cl").textContent = "You can close this tab.";
+  }).catch(function(){ fail("Check your internet connection."); });
+}
+</script>
+</body>
+</html>
