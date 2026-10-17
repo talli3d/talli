@@ -24,6 +24,8 @@ h1{font:700 20px/1.15 "Bricolage Grotesque",sans-serif;margin:0}
 .ln.ch{border-color:var(--orange);background:var(--orange-soft)}
 .ln.need{border-color:var(--red)}
 .top{display:flex;gap:12px;align-items:flex-start}.top .tx{flex:1;min-width:0}
+.pic{width:64px;height:64px;border-radius:10px;object-fit:cover;flex:none;background:#eef1f0}
+.pic.sm{width:48px;height:48px;border-radius:8px}
 .nm{font-weight:600;font-size:16px}.ds{color:var(--muted);font-size:13px}.pr{font-weight:600;white-space:nowrap}
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 button{font:inherit;cursor:pointer;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);min-height:48px;padding:0 14px;touch-action:manipulation}
@@ -73,13 +75,17 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){retur
 function money(v){ return "AED " + Number(v||0).toFixed(2); }
 
 // ---------- invoice page: confirm the order arrived and/or that payment was sent ----------
+function pic(x, cls){
+  var m = x[4];
+  return (typeof m === "string" && m.length < 20000 && /^[A-Za-z0-9+\/]+=*$/.test(m)) ? '<img class="pic' + (cls ? ' ' + cls : '') + '" src="data:image/jpeg;base64,' + m + '" alt="">' : '';
+}
 function invoicePage(){
   document.title = (D.b || "Talli 3D Printing") + " – " + D.n;
   var pick = {rec:false, paid:false}, nameVal = D.cn || "", refVal = "", commentVal = "", sent = false;
   function draw(){
     var h = '<header><div class="logo">T</div><div><h1>' + esc(D.b || "Talli 3D Printing") + '</h1><div class="sub">Invoice ' + esc(D.n) + (D.cn ? ' · for ' + esc(D.cn) : '') + '</div></div></header>';
     h += '<div class="intro">Thanks for your order! Tap below to let us know when it arrives and when you\'ve paid.' + (D.v ? '<div class="sub" style="margin-top:4px">Due by ' + esc(D.v) + '</div>' : '') + '</div>';
-    h += '<div class="card">' + D.l.map(function(x){ return '<div class="top" style="padding:6px 0;border-bottom:1px solid #eef1f0"><div class="tx"><div class="nm" style="font-size:15px">' + esc(x[0]) + '</div><div class="ds">' + esc(x[1] || "") + (x[2] > 1 ? ' · qty ' + esc(x[2]) : '') + '</div></div><div class="pr">' + money(x[3]) + '</div></div>'; }).join("") +
+    h += '<div class="card">' + D.l.map(function(x){ return '<div class="top" style="padding:6px 0;border-bottom:1px solid #eef1f0">' + pic(x, "sm") + '<div class="tx"><div class="nm" style="font-size:15px">' + esc(x[0]) + '</div><div class="ds">' + esc(x[1] || "") + (x[2] > 1 ? ' · qty ' + esc(x[2]) : '') + '</div></div><div class="pr">' + money(x[3]) + '</div></div>'; }).join("") +
          '<div class="row" style="margin-top:10px"><span>Total</span><span class="tot">' + money(D.t) + '</span></div>' + (D.x ? '<div class="sub">' + esc(D.x) + '</div>' : '') +
          (D.pd > 0 ? '<div class="row"><span class="sub">Paid</span><span>' + money(D.pd) + '</span></div><div class="row" style="margin-top:4px"><b>Balance due</b><b>' + money(D.bal) + '</b></div>' : '') + '</div>';
     if(D.pay) h += '<div class="card"><div class="sub" style="margin-bottom:4px">How to pay</div><div style="white-space:pre-line">' + esc(D.pay) + '</div></div>';
@@ -130,7 +136,7 @@ if(!D){
     h += '<div class="intro">Please check each item and tap <b>Approve</b> or <b>Change</b>, then send your reply.' + (D.v ? '<div class="sub" style="margin-top:4px">Valid until ' + esc(D.v) + '</div>' : '') + '</div>';
     D.l.forEach(function(x, i){
       var s = st[i];
-      h += '<div class="ln ' + s.s + (s.need ? ' need' : '') + '" id="ln' + i + '"><div class="top"><div class="tx"><div class="nm">' + esc(x[0]) + '</div><div class="ds">' + esc(x[1] || "") + (x[2] > 1 ? ' · qty ' + esc(x[2]) : '') + '</div></div><div class="pr">' + money(x[3]) + '</div></div>';
+      h += '<div class="ln ' + s.s + (s.need ? ' need' : '') + '" id="ln' + i + '"><div class="top">' + pic(x) + '<div class="tx"><div class="nm">' + esc(x[0]) + '</div><div class="ds">' + esc(x[1] || "") + (x[2] > 1 ? ' · qty ' + esc(x[2]) : '') + '</div></div><div class="pr">' + money(x[3]) + '</div></div>';
       h += '<div class="acts"><button class="b-ok' + (s.s === "ok" ? " on" : "") + '" data-i="' + i + '" data-a="ok" aria-pressed="' + (s.s === "ok") + '">&#10003; Approve</button><button class="b-ch' + (s.s === "ch" ? " on" : "") + '" data-i="' + i + '" data-a="ch" aria-pressed="' + (s.s === "ch") + '">&#9998; Change</button></div>';
       if(s.s === "ch"){
         h += '<textarea data-n="' + i + '" placeholder="What should we change? e.g. make it pink" aria-label="Change for ' + esc(x[0]) + '">' + esc(s.note) + '</textarea><div class="chips">' +
