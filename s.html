@@ -23,13 +23,15 @@ button{font:inherit;border:0;border-radius:10px;background:var(--teal);color:#ff
 var FORM = "https://docs.google.com/forms/d/e/1FAIpQLSe5gfmV0amFX-zM1GPi7EsPbuITcDwwCSThS9shpLYF-f63Fw/formResponse";
 var E_ID = "entry.448647656", E_DATA = "entry.1838359332";
 var box = document.getElementById("box");
+function tell(m){ try{ if(window.opener) window.opener.postMessage(Object.assign({talli:"save"}, m), "*"); }catch(e){} }
+tell({state:"start"});
 var h = new URLSearchParams(location.hash.slice(1)), k = h.get("t") || "", d = h.get("d") || "", base = h.get("b") || "";
-history.replaceState(null, "", location.pathname);
+try{ history.replaceState(null, "", location.pathname); }catch(e){}   // not allowed when opened from the sandboxed Talli form
 
 function sha(s){ return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function(b){ return new Uint8Array(b); }); }
 function hex(u){ return Array.prototype.map.call(u, function(x){ return ("0" + x.toString(16)).slice(-2); }).join(""); }
 function b64(u){ var s = ""; for(var i = 0; i < u.length; i += 8192) s += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return btoa(s); }
-function fail(msg){ box.innerHTML = '<div class="big">!</div><h1>Couldn\'t save the link</h1><p>' + msg + '</p><button onclick="location.reload()">Try again</button>'; }
+function fail(msg){ tell({state:"fail", msg:msg}); box.innerHTML = '<div class="big">!</div><h1>Couldn\'t save the link</h1><p>' + msg + '</p><button onclick="location.reload()">Try again</button>'; }
 
 if(!/^[A-Za-z0-9]{12}$/.test(k) || !d) fail("This page is opened by the Talli form. Go back and press the button again.");
 else {
@@ -54,9 +56,10 @@ else {
     box.innerHTML = '<div class="big">&#10003;</div><h1>Link saved</h1><p>Your client can open it now.</p><code id="lk"></code><button id="cp">Copy link</button><p id="cl" style="margin-top:12px"></p>';
     document.getElementById("lk").textContent = link;
     document.getElementById("cp").onclick = function(){ navigator.clipboard.writeText(link).then(function(){ document.getElementById("cp").textContent = "Copied"; }); };
-    if(window.opener){ document.getElementById("cl").textContent = "This window closes by itself."; setTimeout(function(){ window.close(); }, 1500); }
+    tell({state:"saved", k:k});
+    if(window.opener || history.length < 2){ document.getElementById("cl").textContent = "This window closes by itself."; setTimeout(function(){ window.close(); }, 1500); }
     else document.getElementById("cl").textContent = "You can close this tab.";
-  }).catch(function(){ fail("Check your internet connection."); });
+  }).catch(function(e){ fail("Check your internet connection. (" + (e && e.message || e) + ")"); });
 }
 </script>
 </body>
