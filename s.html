@@ -25,7 +25,7 @@ var E_ID = "entry.448647656", E_DATA = "entry.1838359332";
 var box = document.getElementById("box");
 function tell(m){ try{ if(window.opener) window.opener.postMessage(Object.assign({talli:"save"}, m), "*"); }catch(e){} }
 tell({state:"start"});
-var h = new URLSearchParams(location.hash.slice(1)), k = h.get("t") || "", d = h.get("d") || "", base = h.get("b") || "";
+var h = new URLSearchParams(location.hash.slice(1)), k = h.get("t") || "", n = /^[A-Za-z0-9-]{1,60}$/.test(h.get("n") || "") ? h.get("n") : "", d = h.get("d") || "", base = h.get("b") || "";
 try{ history.replaceState(null, "", location.pathname); }catch(e){}   // not allowed when opened from the sandboxed Talli form
 
 function sha(s){ return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function(b){ return new Uint8Array(b); }); }
@@ -52,7 +52,7 @@ else {
       });
     });
   }).then(function(){
-    var link = (/^https:\/\/[^\s?#]+$/.test(base) ? base : location.origin + location.pathname.replace(/s\.html$/, "")) + "?k=" + k;
+    var link = (/^https:\/\/[^\s?#]+$/.test(base) ? base : location.origin + location.pathname.replace(/s\.html$/, "")) + (n ? "?doc=" + n + "&k=" : "?k=") + k;
     box.innerHTML = '<div class="big">&#10003;</div><h1>Link saved</h1><p>Your client can open it now.</p><code id="lk"></code><button id="cp">Copy link</button><p id="cl" style="margin-top:12px"></p>';
     document.getElementById("lk").textContent = link;
     document.getElementById("cp").onclick = function(){ navigator.clipboard.writeText(link).then(function(){ document.getElementById("cp").textContent = "Copied"; }); };
