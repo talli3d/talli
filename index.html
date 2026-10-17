@@ -15,7 +15,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700&display=swap">
 <style>
 /* Talli client quote approval: one card per item, Approve / Change buttons, sticky reply bar */
 :root{--ink:#17201f;--muted:#5d6a68;--line:#d5dcda;--bg:#eef1f0;--card:#fff;--teal:#0f6b5f;--teal-soft:#e1f0ec;--orange:#c4610f;--orange-soft:#fff2e3;--red:#b42318}
@@ -33,7 +33,10 @@ h1{font:700 20px/1.15 "Bricolage Grotesque",sans-serif;margin:0}
 .ln.ch{border-color:var(--orange);background:var(--orange-soft)}
 .ln.need{border-color:var(--red)}
 .top{display:flex;gap:12px;align-items:flex-start}.top .tx{flex:1;min-width:0}
-.cdots{display:inline-flex;gap:3px;vertical-align:-2px;margin-right:6px}
+.cdots{display:inline-flex;gap:3px;vertical-align:-2px;margin-inline-end:6px}
+.lang{flex:none;min-height:36px;padding:0 14px;border-radius:18px;font-size:14px;font-weight:600}
+html[lang=ar] body{font-family:"IBM Plex Sans Arabic","IBM Plex Sans",system-ui,sans-serif}
+.lang[lang=ar]{font-family:"IBM Plex Sans Arabic",system-ui,sans-serif}
 .cdots i{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.18);display:inline-block}
 .pic{width:64px;height:64px;border-radius:10px;object-fit:cover;flex:none;background:#eef1f0}
 .qty{display:inline-block;margin-top:6px;font-size:13px;background:#eef1f0;border-radius:8px;padding:3px 9px;color:var(--ink)}
@@ -83,18 +86,36 @@ function readData(){
   }catch(e){ return null; }
 }
 var D = readData(), app = document.getElementById("app"), bar = document.getElementById("bar");
+// ---------- language: English / Arabic (page text only; item names and replies stay as sent) ----------
+var TX = {en:{"invoice": "Invoice", "quotation": "Quotation", "for": " · for {0}", "introInv": "Thanks for your order! Tap below to let us know when it arrives and when you've paid.", "dueBy": "Due by {0}", "validUntil": "Valid until {0}", "total": "Total", "paid": "Paid", "balance": "Balance due", "howPay": "How to pay", "gotIt": "&#128230; I've received my order", "iPaid": "&#128179; I've paid", "refLabel": "Transfer reference or amount (optional)", "refPh": "e.g. 34 AED, ref 12345", "yourName": "Your name", "anything": "Anything else? (optional)", "phInv": "Feedback, questions…", "phQuote": "Delivery time, gift wrap, questions…", "ready": "Ready to send", "chooseOne": "Choose at least one", "send": "Send", "tapFirst": "Tap \"received\" or \"paid\" first", "sending": "Sending…", "tryAgain": "Try again", "cantSend": "Couldn't send. Check your connection and try again.", "thxPaid": "Thanks! We'll confirm your payment for {0} on WhatsApp.", "thxGot": "Thanks for letting us know your order arrived. Enjoy!", "thankYou": "Thank you", "backWa": "Back to WhatsApp", "waPaid": "I've paid {0}.", "waGot": "I've received {0}.", "introQuote": "Please check each item and tap <b>Approve</b> or <b>Change</b>, then send your reply.", "approve": "&#10003; Approve", "change": "&#9998; Change", "changePh": "What should we change? e.g. make it pink", "changeFor": "Change for {0}", "chips": ["Colour", "Size", "Quantity", "Text", "Design"], "tellUs": "Tell us what to change", "checked": "{0} of {1} items checked", "changes": " · {0} change(s)", "approveAll": "Approve all", "sendReply": "Send reply", "answerAll": "Answer every item first", "thxChanges": "Thanks! We've got your changes for {0}. We'll update the quote and send it back on WhatsApp.", "thxApproved": "Thanks for approving {0}! We'll start on your order and keep you posted on WhatsApp.", "replySent": "Reply sent", "waChanges": "I've sent my changes for {0}.", "waApproved": "I've approved {0}.", "qty": "Qty", "each": "each", "cur": "AED", "colour": "Colour", "loading": "Loading your details…", "incomplete": "This link is incomplete", "askAgain": "Ask Talli 3D Printing to send it again on WhatsApp.", "notReady": "This link isn't ready yet", "tryMinute": "Please try again in a minute, or ask Talli 3D Printing to send it again on WhatsApp."}, ar:{"invoice": "فاتورة", "quotation": "عرض سعر", "for": " · إلى {0}", "introInv": "شكرًا لطلبك! اضغط أدناه لتخبرنا عند وصول طلبك وعند إتمام الدفع.", "dueBy": "تاريخ الاستحقاق: {0}", "validUntil": "صالح حتى: {0}", "total": "الإجمالي", "paid": "المدفوع", "balance": "المبلغ المتبقي", "howPay": "طريقة الدفع", "gotIt": "&#128230; استلمت طلبي", "iPaid": "&#128179; قمت بالدفع", "refLabel": "رقم التحويل أو المبلغ (اختياري)", "refPh": "مثال: 34 درهم، رقم 12345", "yourName": "اسمك", "anything": "هل لديك ملاحظات أخرى؟ (اختياري)", "phInv": "ملاحظات، أسئلة…", "phQuote": "موعد التوصيل، تغليف هدية، أسئلة…", "ready": "جاهز للإرسال", "chooseOne": "اختر خيارًا واحدًا على الأقل", "send": "إرسال", "tapFirst": "اختر «استلمت» أو «قمت بالدفع» أولًا", "sending": "جارٍ الإرسال…", "tryAgain": "حاول مرة أخرى", "cantSend": "تعذّر الإرسال. تحقّق من اتصالك وحاول مرة أخرى.", "thxPaid": "شكرًا! سنؤكد استلام دفعتك للفاتورة {0} عبر واتساب.", "thxGot": "شكرًا لإخبارنا بوصول طلبك. نتمنى أن ينال إعجابك!", "thankYou": "شكرًا لك", "backWa": "العودة إلى واتساب", "waPaid": "قمت بدفع {0}.", "waGot": "استلمت {0}.", "introQuote": "يرجى مراجعة كل منتج والضغط على <b>موافقة</b> أو <b>تعديل</b>، ثم إرسال ردك.", "approve": "&#10003; موافقة", "change": "&#9998; تعديل", "changePh": "ما الذي تريد تغييره؟ مثال: اجعله باللون الوردي", "changeFor": "تعديل على {0}", "chips": ["اللون", "الحجم", "الكمية", "النص", "التصميم"], "tellUs": "أخبرنا بما تريد تغييره", "checked": "تمت مراجعة {0} من {1}", "changes": " · تعديلات: {0}", "approveAll": "موافقة على الكل", "sendReply": "إرسال الرد", "answerAll": "يرجى الرد على كل منتج أولًا", "thxChanges": "شكرًا! استلمنا تعديلاتك على {0}. سنحدّث عرض السعر ونرسله لك عبر واتساب.", "thxApproved": "شكرًا لموافقتك على {0}! سنبدأ العمل على طلبك ونطلعك على التقدّم عبر واتساب.", "replySent": "تم إرسال الرد", "waChanges": "أرسلت تعديلاتي على {0}.", "waApproved": "وافقت على {0}.", "qty": "الكمية", "each": "للقطعة", "cur": "درهم", "colour": "اللون", "loading": "جارٍ تحميل التفاصيل…", "incomplete": "هذا الرابط غير مكتمل", "askAgain": "اطلب من Talli 3D Printing إرساله مرة أخرى عبر واتساب.", "notReady": "الرابط غير جاهز بعد", "tryMinute": "يرجى المحاولة بعد دقيقة، أو اطلب من Talli 3D Printing إرساله مرة أخرى عبر واتساب."}};
+var LANG = (function(){
+  try{ var q = (location.search.match(/[?&]lang=(ar|en)(?:&|$)/) || [])[1]; if(q) return q;
+       var v = localStorage.getItem("talli_lang"); if(v === "ar" || v === "en") return v; }catch(e){}
+  return /^ar/i.test(navigator.language || "") ? "ar" : "en";
+})();
+function t(k){ var a = [].slice.call(arguments, 1), v = (TX[LANG] && TX[LANG][k] != null) ? TX[LANG][k] : TX.en[k];
+  return typeof v === "string" ? v.replace(/\{(\d)\}/g, function(_, i){ return a[i]; }) : v; }
+function applyLang(){ document.documentElement.lang = LANG; document.documentElement.dir = LANG === "ar" ? "rtl" : "ltr"; }
+applyLang();
+var redraw = null;
+function langBtn(){ return '<button class="lang" id="langBtn" type="button" lang="' + (LANG === "ar" ? "en" : "ar") + '">' + (LANG === "ar" ? "English" : "عربي") + '</button>'; }
+document.addEventListener("click", function(e){
+  if(!e.target.closest("#langBtn")) return;
+  LANG = LANG === "ar" ? "en" : "ar"; try{ localStorage.setItem("talli_lang", LANG); }catch(_){}
+  applyLang(); if(redraw) redraw();
+});
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
-function money(v){ return "AED " + Number(v||0).toFixed(2); }
+function money(v){ var n = Number(v||0).toFixed(2); return LANG === "ar" ? n + " " + t("cur") : "AED " + n; }
 
 // ---------- invoice page: confirm the order arrived and/or that payment was sent ----------
 function qtyLine(x){
   var q = Math.max(1, Math.round(Number(x[2]) || 1));
-  return '<div class="qty">Qty <b>' + q + '</b>' + (q > 1 ? ' × ' + money(Number(x[3] || 0) / q) + ' each' : '') + '</div>';
+  return '<div class="qty">' + t("qty") + ' <b>' + q + '</b>' + (q > 1 ? ' × ' + money(Number(x[3] || 0) / q) + ' ' + t("each") : '') + '</div>';
 }
 function cdots(x){
   var c = Array.isArray(x[5]) ? x[5].filter(function(v){ return v === "multi" || /^#[0-9a-f]{6}$/i.test(v); }).slice(0, 4) : [];
   if(!c.length) return "";
-  return '<span class="cdots" aria-label="Colour">' + c.map(function(v){
+  return '<span class="cdots" aria-label="' + t("colour") + '">' + c.map(function(v){
     return '<i style="background:' + (v === "multi" ? "conic-gradient(#e0b13a,#2f6fde,#2a9d4b,#e0b13a)" : v) + '"></i>'; }).join("") + '</span>';
 }
 function pic(x, cls){
@@ -105,26 +126,27 @@ function invoicePage(){
   document.title = (D.b || "Talli 3D Printing") + " – " + D.n;
   var pick = {rec:false, paid:false}, nameVal = D.cn || "", refVal = "", commentVal = "", sent = false;
   function draw(){
-    var h = '<header><div class="logo">T</div><div><h1>' + esc(D.b || "Talli 3D Printing") + '</h1><div class="sub">Invoice ' + esc(D.n) + (D.cn ? ' · for ' + esc(D.cn) : '') + '</div></div></header>';
-    h += '<div class="intro">Thanks for your order! Tap below to let us know when it arrives and when you\'ve paid.' + (D.v ? '<div class="sub" style="margin-top:4px">Due by ' + esc(D.v) + '</div>' : '') + '</div>';
+    var h = '<header><div class="logo">T</div><div style="flex:1;min-width:0"><h1>' + esc(D.b || "Talli 3D Printing") + '</h1><div class="sub">' + t("invoice") + ' <bdi>' + esc(D.n) + '</bdi>' + (D.cn ? t("for", "<bdi>" + esc(D.cn) + "</bdi>") : '') + '</div></div>' + langBtn() + '</header>';
+    h += '<div class="intro">' + t("introInv") + (D.v ? '<div class="sub" style="margin-top:4px">' + t("dueBy", "<bdi>" + esc(D.v) + "</bdi>") + '</div>' : '') + '</div>';
     h += '<div class="card">' + D.l.map(function(x){ return '<div class="top" style="padding:6px 0;border-bottom:1px solid #eef1f0">' + pic(x, "sm") + '<div class="tx"><div class="nm" style="font-size:15px">' + esc(x[0]) + '</div><div class="ds">' + cdots(x) + esc(x[1] || "") + '</div>' + qtyLine(x) + '</div><div class="pr">' + money(x[3]) + '</div></div>'; }).join("") +
-         '<div class="row" style="margin-top:10px"><span>Total</span><span class="tot">' + money(D.t) + '</span></div>' + (D.x ? '<div class="sub">' + esc(D.x) + '</div>' : '') +
-         (D.pd > 0 ? '<div class="row"><span class="sub">Paid</span><span>' + money(D.pd) + '</span></div><div class="row" style="margin-top:4px"><b>Balance due</b><b>' + money(D.bal) + '</b></div>' : '') + '</div>';
-    if(D.pay) h += '<div class="card"><div class="sub" style="margin-bottom:4px">How to pay</div><div style="white-space:pre-line">' + esc(D.pay) + '</div></div>';
-    h += '<div class="ln' + (pick.rec ? ' ok' : '') + '"><button class="b-ok' + (pick.rec ? ' on' : '') + '" data-p="rec" aria-pressed="' + pick.rec + '" style="width:100%">&#128230; I\'ve received my order</button></div>';
-    h += '<div class="ln' + (pick.paid ? ' ok' : '') + '"><button class="b-ok' + (pick.paid ? ' on' : '') + '" data-p="paid" aria-pressed="' + pick.paid + '" style="width:100%">&#128179; I\'ve paid</button>' +
-         (pick.paid ? '<label for="rf">Transfer reference or amount (optional)</label><input id="rf" value="' + esc(refVal) + '" placeholder="e.g. 34 AED, ref 12345">' : '') + '</div>';
-    h += '<div class="card"><label for="nm">Your name</label><input id="nm" value="' + esc(nameVal) + '" autocomplete="name"><label for="cm">Anything else? (optional)</label><textarea id="cm" placeholder="Feedback, questions…">' + esc(commentVal) + '</textarea></div>';
+         '<div class="row" style="margin-top:10px"><span>' + t("total") + '</span><span class="tot">' + money(D.t) + '</span></div>' + (D.x ? '<div class="sub">' + esc(D.x) + '</div>' : '') +
+         (D.pd > 0 ? '<div class="row"><span class="sub">' + t("paid") + '</span><span>' + money(D.pd) + '</span></div><div class="row" style="margin-top:4px"><b>' + t("balance") + '</b><b>' + money(D.bal) + '</b></div>' : '') + '</div>';
+    if(D.pay) h += '<div class="card"><div class="sub" style="margin-bottom:4px">' + t("howPay") + '</div><div style="white-space:pre-line">' + esc(D.pay) + '</div></div>';
+    h += '<div class="ln' + (pick.rec ? ' ok' : '') + '"><button class="b-ok' + (pick.rec ? ' on' : '') + '" data-p="rec" aria-pressed="' + pick.rec + '" style="width:100%">' + t("gotIt") + '</button></div>';
+    h += '<div class="ln' + (pick.paid ? ' ok' : '') + '"><button class="b-ok' + (pick.paid ? ' on' : '') + '" data-p="paid" aria-pressed="' + pick.paid + '" style="width:100%">' + t("iPaid") + '</button>' +
+         (pick.paid ? '<label for="rf">' + t("refLabel") + '</label><input id="rf" value="' + esc(refVal) + '" placeholder="' + t("refPh") + '">' : '') + '</div>';
+    h += '<div class="card"><label for="nm">' + t("yourName") + '</label><input id="nm" value="' + esc(nameVal) + '" autocomplete="name"><label for="cm">' + t("anything") + '</label><textarea id="cm" placeholder="' + t("phInv") + '">' + esc(commentVal) + '</textarea></div>';
     app.innerHTML = h; drawBar();
   }
+  redraw = draw;
   function drawBar(msg){
-    bar.innerHTML = '<div class="in"><div class="prog" id="prog"' + (msg ? ' style="color:#b42318"' : '') + '>' + (msg || (pick.rec || pick.paid ? "Ready to send" : "Choose at least one")) + '</div><button class="send" id="send" style="grid-column:1/-1">Send</button></div>';
+    bar.innerHTML = '<div class="in"><div class="prog" id="prog"' + (msg ? ' style="color:#b42318"' : '') + '>' + (msg || (pick.rec || pick.paid ? t("ready") : t("chooseOne"))) + '</div><button class="send" id="send" style="grid-column:1/-1">' + t("send") + '</button></div>';
   }
   app.addEventListener("click", function(e){ var b = e.target.closest("button"); if(!b || !b.dataset.p) return; pick[b.dataset.p] = !pick[b.dataset.p]; draw(); });
   app.addEventListener("input", function(e){ if(e.target.id === "nm") nameVal = e.target.value; if(e.target.id === "cm") commentVal = e.target.value; if(e.target.id === "rf") refVal = e.target.value; });
   bar.addEventListener("click", function(e){
     var b = e.target.closest("button"); if(!b || b.id !== "send" || sent) return;
-    if(!pick.rec && !pick.paid){ drawBar("Tap \"received\" or \"paid\" first"); return; }
+    if(!pick.rec && !pick.paid){ drawBar(t("tapFirst")); return; }
     var notes = ["[Invoice page]"];
     if(pick.rec && pick.paid) notes.push("Order received and payment sent");
     if(pick.paid && refVal.trim()) notes.push("Payment: " + refVal.trim());
@@ -132,20 +154,20 @@ function invoicePage(){
     var body = new URLSearchParams();
     body.append(E.no, D.n); body.append(E.code, D.c || ""); body.append(E.name, (nameVal || "").trim() || D.cn || "Client");
     body.append(E.resp, pick.paid ? "Payment sent" : "Order received"); body.append(E.notes, notes.join("\n").slice(0, 1800));
-    b.disabled = true; b.textContent = "Sending…";
+    b.disabled = true; b.textContent = t("sending");
     fetch(FORM, {method:"POST", mode:"no-cors", body: body})
       .then(function(){ sent = true; bar.remove();
-        var msg = pick.paid ? "Thanks! We'll confirm your payment for " + D.n + " on WhatsApp." : "Thanks for letting us know your order arrived. Enjoy!";
-        var wa = D.p ? "https://wa.me/" + D.p + "?text=" + encodeURIComponent((pick.paid ? "I've paid " : "I've received ") + D.n + ".") : "";
-        app.innerHTML = '<div class="done"><div class="big">&#10003;</div><h1>Thank you</h1><p>' + esc(msg) + '</p>' + (wa ? '<a class="wa" href="' + wa + '">Back to WhatsApp</a>' : '') + '</div>'; window.scrollTo(0, 0); })
-      .catch(function(){ b.disabled = false; b.textContent = "Try again"; drawBar("Couldn't send. Check your connection and try again."); });
+        var msg = pick.paid ? t("thxPaid", D.n) : t("thxGot");
+        var wa = D.p ? "https://wa.me/" + D.p + "?text=" + encodeURIComponent(pick.paid ? t("waPaid", D.n) : t("waGot", D.n)) : "";
+        app.innerHTML = '<div class="done"><div class="big">&#10003;</div><h1>' + t("thankYou") + '</h1><p>' + esc(msg) + '</p>' + (wa ? '<a class="wa" href="' + wa + '">' + t("backWa") + '</a>' : '') + '</div>'; window.scrollTo(0, 0); })
+      .catch(function(){ b.disabled = false; b.textContent = t("tryAgain"); drawBar(t("cantSend")); });
   });
   draw();
 }
 
 function start(){
 if(!D){
-  app.innerHTML = '<div class="done"><h1>This link is incomplete</h1><p class="sub">Ask Talli 3D Printing to send it again on WhatsApp.</p></div>';
+  app.innerHTML = '<div class="done"><h1>' + t("incomplete") + '</h1><p class="sub">' + t("askAgain") + '</p></div>';
   bar.remove();
 } else if(D.k === "i"){
   invoicePage();
@@ -155,27 +177,28 @@ if(!D){
   var nameVal = D.cn || "", commentVal = "";
 
   function draw(){
-    var h = '<header><div class="logo">T</div><div><h1>' + esc(D.b || "Talli 3D Printing") + '</h1><div class="sub">Quotation ' + esc(D.n) + (D.cn ? ' · for ' + esc(D.cn) : '') + '</div></div></header>';
-    h += '<div class="intro">Please check each item and tap <b>Approve</b> or <b>Change</b>, then send your reply.' + (D.v ? '<div class="sub" style="margin-top:4px">Valid until ' + esc(D.v) + '</div>' : '') + '</div>';
+    var h = '<header><div class="logo">T</div><div style="flex:1;min-width:0"><h1>' + esc(D.b || "Talli 3D Printing") + '</h1><div class="sub">' + t("quotation") + ' <bdi>' + esc(D.n) + '</bdi>' + (D.cn ? t("for", "<bdi>" + esc(D.cn) + "</bdi>") : '') + '</div></div>' + langBtn() + '</header>';
+    h += '<div class="intro">' + t("introQuote") + (D.v ? '<div class="sub" style="margin-top:4px">' + t("validUntil", "<bdi>" + esc(D.v) + "</bdi>") + '</div>' : '') + '</div>';
     D.l.forEach(function(x, i){
       var s = st[i];
       h += '<div class="ln ' + s.s + (s.need ? ' need' : '') + '" id="ln' + i + '"><div class="top">' + pic(x) + '<div class="tx"><div class="nm">' + esc(x[0]) + '</div><div class="ds">' + cdots(x) + esc(x[1] || "") + '</div>' + qtyLine(x) + '</div><div class="pr">' + money(x[3]) + '</div></div>';
-      h += '<div class="acts"><button class="b-ok' + (s.s === "ok" ? " on" : "") + '" data-i="' + i + '" data-a="ok" aria-pressed="' + (s.s === "ok") + '">&#10003; Approve</button><button class="b-ch' + (s.s === "ch" ? " on" : "") + '" data-i="' + i + '" data-a="ch" aria-pressed="' + (s.s === "ch") + '">&#9998; Change</button></div>';
+      h += '<div class="acts"><button class="b-ok' + (s.s === "ok" ? " on" : "") + '" data-i="' + i + '" data-a="ok" aria-pressed="' + (s.s === "ok") + '">' + t("approve") + '</button><button class="b-ch' + (s.s === "ch" ? " on" : "") + '" data-i="' + i + '" data-a="ch" aria-pressed="' + (s.s === "ch") + '">' + t("change") + '</button></div>';
       if(s.s === "ch"){
-        h += '<textarea data-n="' + i + '" placeholder="What should we change? e.g. make it pink" aria-label="Change for ' + esc(x[0]) + '">' + esc(s.note) + '</textarea><div class="chips">' +
-          ["Colour","Size","Quantity","Text","Design"].map(function(c){ return '<button data-c="' + i + '" data-v="' + c + '">' + c + '</button>'; }).join("") + '</div>' +
-          (s.miss ? '<div class="err">Tell us what to change</div>' : '');
+        h += '<textarea data-n="' + i + '" placeholder="' + t("changePh") + '" aria-label="' + t("changeFor", esc(x[0])) + '">' + esc(s.note) + '</textarea><div class="chips">' +
+          t("chips").map(function(c){ return '<button data-c="' + i + '" data-v="' + c + '">' + c + '</button>'; }).join("") + '</div>' +
+          (s.miss ? '<div class="err">' + t("tellUs") + '</div>' : '');
       }
       h += '</div>';
     });
-    h += '<div class="card"><div class="row"><span>Total</span><span class="tot">' + money(D.t) + '</span></div>' + (D.x ? '<div class="sub">' + esc(D.x) + '</div>' : '') + '</div>';
-    h += '<div class="card"><label for="nm">Your name</label><input id="nm" value="' + esc(nameVal) + '" autocomplete="name"><label for="cm">Anything else? (optional)</label><textarea id="cm" placeholder="Delivery time, gift wrap, questions…">' + esc(commentVal) + '</textarea></div>';
+    h += '<div class="card"><div class="row"><span>' + t("total") + '</span><span class="tot">' + money(D.t) + '</span></div>' + (D.x ? '<div class="sub">' + esc(D.x) + '</div>' : '') + '</div>';
+    h += '<div class="card"><label for="nm">' + t("yourName") + '</label><input id="nm" value="' + esc(nameVal) + '" autocomplete="name"><label for="cm">' + t("anything") + '</label><textarea id="cm" placeholder="' + t("phQuote") + '">' + esc(commentVal) + '</textarea></div>';
     app.innerHTML = h;
     drawBar();
   }
+  redraw = draw;
   function drawBar(msg){
     var k = st.filter(function(s){ return s.s; }).length, c = st.filter(function(s){ return s.s === "ch"; }).length;
-    bar.innerHTML = '<div class="in"><div class="prog" id="prog"' + (msg ? ' style="color:#b42318"' : '') + '>' + (msg || (k + ' of ' + st.length + ' items checked' + (c ? ' · ' + c + ' change' + (c > 1 ? 's' : '') : ''))) + '</div><button id="all">Approve all</button><button class="send" id="send">Send reply</button></div>';
+    bar.innerHTML = '<div class="in"><div class="prog" id="prog"' + (msg ? ' style="color:#b42318"' : '') + '>' + (msg || (t("checked", k, st.length) + (c ? t("changes", c) : ''))) + '</div><button id="all">' + t("approveAll") + '</button><button class="send" id="send">' + t("sendReply") + '</button></div>';
   }
 
   app.addEventListener("click", function(e){
@@ -209,7 +232,7 @@ if(!D){
       if(!s.s){ s.need = true; if(first < 0) first = i; }
       if(s.s === "ch" && !s.note.trim()){ s.miss = true; if(first < 0) first = i; }
     });
-    if(first >= 0){ draw(); drawBar("Answer every item first"); document.getElementById("ln" + first).scrollIntoView({behavior:"smooth", block:"center"}); return; }
+    if(first >= 0){ draw(); drawBar(t("answerAll")); document.getElementById("ln" + first).scrollIntoView({behavior:"smooth", block:"center"}); return; }
 
     var changes = D.l.map(function(x, i){ return st[i].s === "ch" ? x[0] + ": " + st[i].note.trim() : ""; }).filter(Boolean);
     var approved = D.l.filter(function(x, i){ return st[i].s === "ok"; }).map(function(x){ return x[0]; });
@@ -222,18 +245,17 @@ if(!D){
     body.append(E.no, D.n); body.append(E.code, D.c || ""); body.append(E.name, (nameVal || "").trim() || D.cn || "Client");
     body.append(E.resp, changes.length ? "Request changes" : "Approve as quoted"); body.append(E.notes, notes.slice(0, 1800));
 
-    b.disabled = true; b.textContent = "Sending…";
+    b.disabled = true; b.textContent = t("sending");
     fetch(FORM, {method:"POST", mode:"no-cors", body: body})
       .then(function(){ sent = true; done(changes.length); })
-      .catch(function(){ b.disabled = false; b.textContent = "Try again"; drawBar("Couldn't send. Check your connection and try again."); });
+      .catch(function(){ b.disabled = false; b.textContent = t("tryAgain"); drawBar(t("cantSend")); });
   });
 
   function done(ch){
     bar.remove();
-    var msg = ch ? "Thanks! We've got your changes for " + D.n + ". We'll update the quote and send it back on WhatsApp."
-                 : "Thanks for approving " + D.n + "! We'll start on your order and keep you posted on WhatsApp.";
-    var wa = D.p ? "https://wa.me/" + D.p + "?text=" + encodeURIComponent((ch ? "I've sent my changes for " : "I've approved ") + D.n + ".") : "";
-    app.innerHTML = '<div class="done"><div class="big">&#10003;</div><h1>Reply sent</h1><p>' + esc(msg) + '</p>' + (wa ? '<a class="wa" href="' + wa + '">Back to WhatsApp</a>' : '') + '</div>';
+    var msg = ch ? t("thxChanges", D.n) : t("thxApproved", D.n);
+    var wa = D.p ? "https://wa.me/" + D.p + "?text=" + encodeURIComponent(ch ? t("waChanges", D.n) : t("waApproved", D.n)) : "";
+    app.innerHTML = '<div class="done"><div class="big">&#10003;</div><h1>' + t("replySent") + '</h1><p>' + esc(msg) + '</p>' + (wa ? '<a class="wa" href="' + wa + '">' + t("backWa") + '</a>' : '') + '</div>';
     window.scrollTo(0, 0);
   }
   draw();
@@ -258,7 +280,7 @@ function loadShort(k, tries){
     function again(){
       if(settled) return; settled = true; s.remove(); try{ delete window[cb]; }catch(e){}
       if(tries < 5) setTimeout(function(){ loadShort(k, tries + 1); }, 2000);
-      else { app.innerHTML = '<div class="done"><h1>This link isn\'t ready yet</h1><p class="sub">Please try again in a minute, or ask Talli 3D Printing to send it again on WhatsApp.</p></div>'; }
+      else { app.innerHTML = '<div class="done"><h1>' + t("notReady") + '</h1><p class="sub">' + t("tryMinute") + '</p></div>'; }
     }
     window[cb] = function(r){
       var v = null;
@@ -266,7 +288,7 @@ function loadShort(k, tries){
       if(!v){ again(); return; }
       settled = true; s.remove();
       openBox(k, v).then(function(d){ D = d; bar.style.display = ""; start(); })
-        .catch(function(){ app.innerHTML = '<div class="done"><h1>This link is incomplete</h1><p class="sub">Ask Talli 3D Printing to send it again on WhatsApp.</p></div>'; });
+        .catch(function(){ app.innerHTML = '<div class="done"><h1>' + t("incomplete") + '</h1><p class="sub">' + t("askAgain") + '</p></div>'; });
     };
     s.onerror = again;
     setTimeout(again, 12000);
@@ -277,7 +299,7 @@ function loadShort(k, tries){
 }
 var K = (location.search.match(/[?&]k=([A-Za-z0-9]{12})(?:&|$)/) || [])[1];
 if(!D && K && window.crypto && crypto.subtle){
-  app.innerHTML = '<div class="done"><p class="sub">Loading your details…</p></div>';
+  app.innerHTML = '<div class="done"><p class="sub">' + t("loading") + '</p></div>';
   bar.style.display = "none";
   loadShort(K, 0);
 } else start();
