@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Talli – confirm with Windows Hello</title>
+<style>
+:root{--ink:#14201d;--muted:#5b6b67;--teal:#0f766e;--bg:#f4f6f5;--card:#fff;--red:#b42318}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.box{max-width:400px;margin:0 auto;padding:22px 16px;text-align:center}
+.big{font-size:40px;line-height:1;margin-bottom:10px}
+h1{font-size:18px;margin:0 0 6px}
+p{color:var(--muted);margin:0 0 14px}
+b.doc{color:var(--red)}
+button{font:inherit;border:0;border-radius:10px;background:var(--teal);color:#fff;padding:11px 18px;cursor:pointer;min-width:220px}
+button.sec{background:transparent;color:var(--muted);min-width:0;padding:8px}
+.err{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="box" id="box"></div>
+<script>
+// Opened by the Talli form before deleting a saved record. Uses Windows Hello (face, fingerprint or PIN)
+// through WebAuthn on this site, then tells Talli the result. The credential id lives only in this browser.
+var KEY = "talli_hello_cred";
+var box = document.getElementById("box");
+var h = new URLSearchParams(location.hash.slice(1));
+var nonce = /^[A-Za-z0-9]{16,40}$/.test(h.get("n") || "") ? h.get("n") : "";
+var doc = (h.get("doc") || "").replace(/[^A-Za-z0-9 \-]/g, "").slice(0, 40);
+try{ history.replaceState(null, "", location.pathname); }catch(e){}
+
+function tell(ok, msg){ try{ if(window.opener) window.opener.postMessage({talli:"auth", ok:ok, n:nonce, msg:msg || ""}, "*"); }catch(e){} }
+function rnd(n){ return crypto.getRandomValues(new Uint8Array(n)); }
+function b64(u){ return btoa(String.fromCharCode.apply(null, new Uint8Array(u))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+function unb64(s){ s = s.replace(/-/g,"+").replace(/_/g,"/"); while(s.length % 4) s += "="; var r = atob(s), u = new Uint8Array(r.length); for(var i=0;i<r.length;i++) u[i]=r.charCodeAt(i); return u; }
+function saved(){ try{ return localStorage.getItem(KEY) || ""; }catch(e){ return ""; } }
+function what(){ return doc ? 'delete <b class="doc">' + doc + '</b>' : "continue"; }
+
+function show(icon, title, text, btn, fn, cancel){
+  box.innerHTML = '<div class="big">' + icon + '</div><h1>' + title + '</h1><p>' + text + '</p>' +
+    (btn ? '<button id="go">' + btn + '</button>' : '') + (cancel ? '<br><button class="sec" id="no">Cancel</button>' : '');
+  if(btn) document.getElementById("go").onclick = fn;
+  if(cancel) document.getElementById("no").onclick = function(){ tell(false, "cancelled"); window.close(); };
+}
+function done(){
+  tell(true);
+  show("✅", "Confirmed", "Talli will now " + (doc ? "delete " + doc : "continue") + ". This window closes by itself.");
+  setTimeout(function(){ window.close(); }, 1200);
+}
+function failed(e){
+  var m = (e && e.name === "NotAllowedError") ? "Windows Hello was cancelled or timed out." : "Windows Hello didn't work here" + (e && e.message ? " (" + e.message + ")" : "") + ".";
+  show("⚠️", "Not confirmed", '<span class="err">' + m + '</span> Nothing was deleted.', "Try again", verify, true);
+}
+
+function setup(){
+  navigator.credentials.create({publicKey:{
+    rp:{name:"Talli 3D Printing", id:location.hostname},
+    user:{id:rnd(16), name:"talli-owner", displayName:"Talli owner"},
+    challenge:rnd(32),
+    pubKeyCredParams:[{type:"public-key", alg:-7}, {type:"public-key", alg:-257}],
+    authenticatorSelection:{authenticatorAttachment:"platform", userVerification:"required", residentKey:"preferred"},
+    timeout:60000, attestation:"none"
+  }}).then(function(c){
+    try{ localStorage.setItem(KEY, b64(c.rawId)); }catch(e){}
+    done();
+  }).catch(failed);
+}
+function verify(){
+  var id = saved();
+  if(!id){ return askSetup(); }
+  navigator.credentials.get({publicKey:{
+    challenge:rnd(32), rpId:location.hostname, timeout:60000, userVerification:"required",
+    allowCredentials:[{type:"public-key", id:unb64(id), transports:["internal"]}]
+  }}).then(function(a){
+    var flags = new Uint8Array(a.response.authenticatorData)[32];
+    if(!(flags & 4)) throw new Error("you weren't verified");   // UV flag: face, fingerprint or PIN was checked
+    done();
+  }).catch(failed);
+}
+function askSetup(){
+  show("🔐", "Set up Windows Hello for Talli", "Do this once on this laptop. After that, every delete in Talli asks for your face first.", "Set up Windows Hello", setup, true);
+}
+
+if(!window.PublicKeyCredential || !navigator.credentials){
+  show("⚠️", "Windows Hello isn't available", "This browser can't use Windows Hello. Nothing was deleted.", "", null, true); tell(false, "unsupported");
+} else if(!nonce){
+  show("🔐", "Talli", "This page is opened by the Talli form when you delete a saved record.", "", null, false);
+} else if(!saved()){
+  askSetup();
+} else {
+  show("🙂", "Confirm with Windows Hello", "Look at your Surface camera to " + what() + ".", "Use Windows Hello", verify, true);
+  verify();
+}
+</script>
+</body>
+</html>
