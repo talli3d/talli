@@ -72,9 +72,54 @@ var D = readData(), app = document.getElementById("app"), bar = document.getElem
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 function money(v){ return "AED " + Number(v||0).toFixed(2); }
 
+// ---------- invoice page: confirm the order arrived and/or that payment was sent ----------
+function invoicePage(){
+  document.title = (D.b || "Talli 3D Printing") + " – " + D.n;
+  var pick = {rec:false, paid:false}, nameVal = D.cn || "", refVal = "", commentVal = "", sent = false;
+  function draw(){
+    var h = '<header><div class="logo">T</div><div><h1>' + esc(D.b || "Talli 3D Printing") + '</h1><div class="sub">Invoice ' + esc(D.n) + (D.cn ? ' · for ' + esc(D.cn) : '') + '</div></div></header>';
+    h += '<div class="intro">Thanks for your order! Tap below to let us know when it arrives and when you\'ve paid.' + (D.v ? '<div class="sub" style="margin-top:4px">Due by ' + esc(D.v) + '</div>' : '') + '</div>';
+    h += '<div class="card">' + D.l.map(function(x){ return '<div class="top" style="padding:6px 0;border-bottom:1px solid #eef1f0"><div class="tx"><div class="nm" style="font-size:15px">' + esc(x[0]) + '</div><div class="ds">' + esc(x[1] || "") + (x[2] > 1 ? ' · qty ' + esc(x[2]) : '') + '</div></div><div class="pr">' + money(x[3]) + '</div></div>'; }).join("") +
+         '<div class="row" style="margin-top:10px"><span>Total</span><span class="tot">' + money(D.t) + '</span></div>' + (D.x ? '<div class="sub">' + esc(D.x) + '</div>' : '') +
+         (D.pd > 0 ? '<div class="row"><span class="sub">Paid</span><span>' + money(D.pd) + '</span></div><div class="row" style="margin-top:4px"><b>Balance due</b><b>' + money(D.bal) + '</b></div>' : '') + '</div>';
+    if(D.pay) h += '<div class="card"><div class="sub" style="margin-bottom:4px">How to pay</div><div style="white-space:pre-line">' + esc(D.pay) + '</div></div>';
+    h += '<div class="ln' + (pick.rec ? ' ok' : '') + '"><button class="b-ok' + (pick.rec ? ' on' : '') + '" data-p="rec" aria-pressed="' + pick.rec + '" style="width:100%">&#128230; I\'ve received my order</button></div>';
+    h += '<div class="ln' + (pick.paid ? ' ok' : '') + '"><button class="b-ok' + (pick.paid ? ' on' : '') + '" data-p="paid" aria-pressed="' + pick.paid + '" style="width:100%">&#128179; I\'ve paid</button>' +
+         (pick.paid ? '<label for="rf">Transfer reference or amount (optional)</label><input id="rf" value="' + esc(refVal) + '" placeholder="e.g. 34 AED, ref 12345">' : '') + '</div>';
+    h += '<div class="card"><label for="nm">Your name</label><input id="nm" value="' + esc(nameVal) + '" autocomplete="name"><label for="cm">Anything else? (optional)</label><textarea id="cm" placeholder="Feedback, questions…">' + esc(commentVal) + '</textarea></div>';
+    app.innerHTML = h; drawBar();
+  }
+  function drawBar(msg){
+    bar.innerHTML = '<div class="in"><div class="prog" id="prog"' + (msg ? ' style="color:#b42318"' : '') + '>' + (msg || (pick.rec || pick.paid ? "Ready to send" : "Choose at least one")) + '</div><button class="send" id="send" style="grid-column:1/-1">Send</button></div>';
+  }
+  app.addEventListener("click", function(e){ var b = e.target.closest("button"); if(!b || !b.dataset.p) return; pick[b.dataset.p] = !pick[b.dataset.p]; draw(); });
+  app.addEventListener("input", function(e){ if(e.target.id === "nm") nameVal = e.target.value; if(e.target.id === "cm") commentVal = e.target.value; if(e.target.id === "rf") refVal = e.target.value; });
+  bar.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b || b.id !== "send" || sent) return;
+    if(!pick.rec && !pick.paid){ drawBar("Tap \"received\" or \"paid\" first"); return; }
+    var notes = ["[Invoice page]"];
+    if(pick.rec && pick.paid) notes.push("Order received and payment sent");
+    if(pick.paid && refVal.trim()) notes.push("Payment: " + refVal.trim());
+    if(commentVal.trim()) notes.push("Note: " + commentVal.trim());
+    var body = new URLSearchParams();
+    body.append(E.no, D.n); body.append(E.code, D.c || ""); body.append(E.name, (nameVal || "").trim() || D.cn || "Client");
+    body.append(E.resp, pick.paid ? "Payment sent" : "Order received"); body.append(E.notes, notes.join("\n").slice(0, 1800));
+    b.disabled = true; b.textContent = "Sending…";
+    fetch(FORM, {method:"POST", mode:"no-cors", body: body})
+      .then(function(){ sent = true; bar.remove();
+        var msg = pick.paid ? "Thanks! We'll confirm your payment for " + D.n + " on WhatsApp." : "Thanks for letting us know your order arrived. Enjoy!";
+        var wa = D.p ? "https://wa.me/" + D.p + "?text=" + encodeURIComponent((pick.paid ? "I've paid " : "I've received ") + D.n + ".") : "";
+        app.innerHTML = '<div class="done"><div class="big">&#10003;</div><h1>Thank you</h1><p>' + esc(msg) + '</p>' + (wa ? '<a class="wa" href="' + wa + '">Back to WhatsApp</a>' : '') + '</div>'; window.scrollTo(0, 0); })
+      .catch(function(){ b.disabled = false; b.textContent = "Try again"; drawBar("Couldn't send. Check your connection and try again."); });
+  });
+  draw();
+}
+
 if(!D){
   app.innerHTML = '<div class="done"><h1>This link is incomplete</h1><p class="sub">Ask Talli 3D Printing to send it again on WhatsApp.</p></div>';
   bar.remove();
+} else if(D.k === "i"){
+  invoicePage();
 } else {
   document.title = (D.b || "Talli 3D Printing") + " – " + D.n;
   var st = D.l.map(function(){ return {s:"", note:"", miss:false}; }), sent = false;
