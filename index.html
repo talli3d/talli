@@ -126,6 +126,7 @@ function invoicePage(){
   draw();
 }
 
+function start(){
 if(!D){
   app.innerHTML = '<div class="done"><h1>This link is incomplete</h1><p class="sub">Ask Talli 3D Printing to send it again on WhatsApp.</p></div>';
   bar.remove();
@@ -220,6 +221,49 @@ if(!D){
   }
   draw();
 }
+}
+
+// ---------- short links: ?k=<12-char key>; the details are stored encrypted in the Talli link store sheet ----------
+var STORE_SHEET = "1Z1U1eL7RAJiCRhAOU8O9AnjTfTl6ANzCMU_k1TBNogM", STORE_GID = "383189794";
+function sha(s){ return crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function(b){ return new Uint8Array(b); }); }
+function hex(u){ return Array.prototype.map.call(u, function(x){ return ("0" + x.toString(16)).slice(-2); }).join(""); }
+function openBox(k, b64){
+  var raw = atob(b64), bytes = new Uint8Array(raw.length);
+  for(var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return sha("talli-key:" + k)
+    .then(function(kb){ return crypto.subtle.importKey("raw", kb, "AES-GCM", false, ["decrypt"]); })
+    .then(function(key){ return crypto.subtle.decrypt({name:"AES-GCM", iv:bytes.slice(0, 12)}, key, bytes.slice(12)); })
+    .then(function(pt){ var d = JSON.parse(new TextDecoder().decode(pt)); if(!(d && d.n && Array.isArray(d.l))) throw 0; return d; });
+}
+function loadShort(k, tries){
+  sha("talli-id:" + k).then(function(h){
+    var id = hex(h).slice(0, 24), cb = "talli" + Date.now(), s = document.createElement("script"), settled = false;
+    function again(){
+      if(settled) return; settled = true; s.remove(); try{ delete window[cb]; }catch(e){}
+      if(tries < 5) setTimeout(function(){ loadShort(k, tries + 1); }, 2000);
+      else { app.innerHTML = '<div class="done"><h1>This link isn\'t ready yet</h1><p class="sub">Please try again in a minute, or ask Talli 3D Printing to send it again on WhatsApp.</p></div>'; }
+    }
+    window[cb] = function(r){
+      var v = null;
+      try{ v = r.table.rows[0].c[0].v; }catch(e){}
+      if(!v){ again(); return; }
+      settled = true; s.remove();
+      openBox(k, v).then(function(d){ D = d; bar.style.display = ""; start(); })
+        .catch(function(){ app.innerHTML = '<div class="done"><h1>This link is incomplete</h1><p class="sub">Ask Talli 3D Printing to send it again on WhatsApp.</p></div>'; });
+    };
+    s.onerror = again;
+    setTimeout(again, 12000);
+    s.src = "https://docs.google.com/spreadsheets/d/" + STORE_SHEET + "/gviz/tq?gid=" + STORE_GID + "&tqx=responseHandler:" + cb +
+      "&tq=" + encodeURIComponent("select C where B = '" + id + "' order by A desc limit 1");
+    document.head.appendChild(s);
+  });
+}
+var K = (location.search.match(/[?&]k=([A-Za-z0-9]{12})(?:&|$)/) || [])[1];
+if(!D && K && window.crypto && crypto.subtle){
+  app.innerHTML = '<div class="done"><p class="sub">Loading your details…</p></div>';
+  bar.style.display = "none";
+  loadShort(K, 0);
+} else start();
 </script>
 </body>
 </html>
