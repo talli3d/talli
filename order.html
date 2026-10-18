@@ -77,7 +77,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible,select:focus-vis
 var TALLI_KEY = {"kty":"EC","crv":"P-256","x":"4c95rbe-gcnPKVX79-iny1jPz8r8NBkn8CEuzBY7bRc","y":"xRq6RaR4fIRFPZqyHIclVnlsO9DGf_SPN4lZ-PTxBA0"};
 var FORM = "https://docs.google.com/forms/d/e/1FAIpQLSe5gfmV0amFX-zM1GPi7EsPbuITcDwwCSThS9shpLYF-f63Fw/formResponse";
 var E_ID = "entry.448647656", E_DATA = "entry.1838359332";
-var TALLI_WA = "971585579070", MAX_PICS = 6, CHUNK = 40000;
+var TALLI_WA = "971585579070", MAX_PICS = 6, CHUNK = 24000;   // Google Forms rejects answers over ~32 000 characters
 
 var TX = {
  en:{
@@ -298,6 +298,20 @@ bar.addEventListener("click", function(e){
 // ---------- encrypt with Talli's public key (ECDH P-256 → AES-GCM) and send in chunks ----------
 function b64(buf){ var u=new Uint8Array(buf), s=""; for(var i=0;i<u.length;i+=8192) s+=String.fromCharCode.apply(null,u.subarray(i,i+8192)); return btoa(s); }
 function rid(n){ var A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", r=crypto.getRandomValues(new Uint32Array(n)), s=""; for(var i=0;i<n;i++) s+=A[r[i]%A.length]; return s; }
+var STORE_SHEET = "1Z1U1eL7RAJiCRhAOU8O9AnjTfTl6ANzCMU_k1TBNogM", STORE_GID = "383189794";
+// which parts of this order already reached the store (public sheet, read with a JSONP gviz query)
+function storedParts(oid){
+  return new Promise(function(res){
+    var cb = "talliChk" + Date.now() + Math.floor(Math.random()*1000), s = document.createElement("script"), fin = false;
+    function end(v){ if(fin) return; fin = true; s.remove(); try{ delete window[cb]; }catch(e){} res(v); }
+    window[cb] = function(r){ var got = {}; try{ r.table.rows.forEach(function(row){ var id = row.c[0] && row.c[0].v; if(id) got[id] = true; }); }catch(e){} end(got); };
+    s.onerror = function(){ end(null); }; setTimeout(function(){ end(null); }, 15000);
+    s.src = "https://docs.google.com/spreadsheets/d/" + STORE_SHEET + "/gviz/tq?gid=" + STORE_GID + "&tqx=responseHandler:" + cb +
+      "&tq=" + encodeURIComponent("select B where B starts with 'o:" + oid + ":'");
+    document.head.appendChild(s);
+  });
+}
+function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 function post(id, data){ var body=new URLSearchParams(); body.append(E_ID,id); body.append(E_DATA,data); return fetch(FORM,{method:"POST",mode:"no-cors",body:body}); }
 async function submit(){
   busy=t("sending",0); draw();
@@ -314,8 +328,25 @@ async function submit(){
     var epk=await crypto.subtle.exportKey("jwk", eph.publicKey);
     var parts=[]; for(var i=0;i<ct.length;i+=CHUNK) parts.push(ct.slice(i,i+CHUNK));
     var n=parts.length, pad=function(i){ return ("00"+i).slice(-3); };
-    await post("o:"+oid+":000/"+n, JSON.stringify({v:1, epk:{kty:"EC",crv:"P-256",x:epk.x,y:epk.y}, iv:b64(iv), n:n}));
-    for(var j=0;j<n;j++){ await post("o:"+oid+":"+pad(j+1)+"/"+n, parts[j]); busy=t("sending",Math.round((j+1)/n*100)); draw(); }
+    var rows=[["o:"+oid+":000/"+n, JSON.stringify({v:1, epk:{kty:"EC",crv:"P-256",x:epk.x,y:epk.y}, iv:b64(iv), n:n})]];
+    for(var j=0;j<n;j++) rows.push(["o:"+oid+":"+pad(j+1)+"/"+n, parts[j]]);
+    for(var j2=0;j2<rows.length;j2+=4){            // 4 parts at a time
+      await Promise.all(rows.slice(j2,j2+4).map(function(r){ return post(r[0], r[1]); }));
+      busy=t("sending",Math.round(Math.min(rows.length,j2+4)/rows.length*90)); draw(); }
+    // make sure every part arrived; re-send any that didn't (up to 3 rounds)
+    var checked=false;
+    for(var round=0; round<4; round++){
+      await wait(round===0?2500:4000);
+      var got=await storedParts(oid);
+      if(!got) continue;
+      checked=true;
+      var missing=rows.filter(function(r){ return !got[r[0]]; });
+      if(!missing.length){ rows=[]; break; }
+      if(round===3) break;
+      for(var m=0;m<missing.length;m+=4) await Promise.all(missing.slice(m,m+4).map(function(r){ return post(r[0], r[1]); }));
+    }
+    if(rows.length && checked) throw new Error("not all parts arrived");   // if the check itself couldn't run, trust the sends
+    busy=t("sending",100); draw();
     sentId=oid; busy=false; try{ sessionStorage.removeItem("talli_order"); }catch(_){}
     done();
   }catch(e){ busy=false; err=t("failed"); draw(); }
