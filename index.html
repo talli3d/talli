@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -91,7 +91,7 @@ var TX = {en:{"invoice": "Invoice", "quotation": "Quotation", "for": " · for {0
 var LANG = (function(){
   try{ var q = (location.search.match(/[?&]lang=(ar|en)(?:&|$)/) || [])[1]; if(q) return q;
        var v = localStorage.getItem("talli_lang"); if(v === "ar" || v === "en") return v; }catch(e){}
-  return /^ar/i.test(navigator.language || "") ? "ar" : "en";
+  return "ar";
 })();
 function t(k){ var a = [].slice.call(arguments, 1), v = (TX[LANG] && TX[LANG][k] != null) ? TX[LANG][k] : TX.en[k];
   return typeof v === "string" ? v.replace(/\{(\d)\}/g, function(_, i){ return a[i]; }) : v; }
