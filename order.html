@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Talli 3D Printing – Order</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="description" content="Tell Talli 3D Printing what you'd like printed: pictures, size, colours and quantity.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Talli 3D Printing">
@@ -166,9 +170,11 @@ var app=document.getElementById("app"), bar=document.getElementById("bar");
 var O={type:"",desc:"",pics:[],size:{l:"",w:"",h:"",unsure:false,note:""},det:{},colours:[],asPhoto:false,qty:"1",need:"",deliv:"",area:"",name:"",phone:"",notes:""};
 var STEPS=["type","desc","pics","size","details","colour","qty","contact","review"], step=0, err="", busy=false, sentId="";
 try{ var saved=JSON.parse(sessionStorage.getItem("talli_order")||"null"); if(saved && saved.O){ O=saved.O; step=saved.step||0; } }catch(e){}
+var QT=(location.search.match(/[?&]type=(key|fig|part|logo|gift|other)(?:&|$)/)||[])[1];
+if(QT && !O.type){ O.type=QT; step=1; }          // started from a card on the Talli home page
 function keep(){ try{ sessionStorage.setItem("talli_order", JSON.stringify({O:O, step:step})); }catch(e){} }
 
-function head(){ return '<header><div class="logo">T</div><div><h1>'+t("title")+'</h1><div class="sub">'+t("sub")+'</div></div><button class="lang" id="lang" type="button" lang="'+(LANG==="ar"?"en":"ar")+'">'+(LANG==="ar"?"English":"عربي")+'</button></header>'+
+function head(){ return '<header><a class="logo" href="https://talli3d.github.io/" aria-label="Talli home" style="text-decoration:none">T</a><div><h1>'+t("title")+'</h1><div class="sub">'+t("sub")+'</div></div><button class="lang" id="lang" type="button" lang="'+(LANG==="ar"?"en":"ar")+'">'+(LANG==="ar"?"English":"عربي")+'</button></header>'+
   '<div class="prog"><i style="width:'+Math.round((step+1)/STEPS.length*100)+'%"></i></div>'; }
 function ask(q, sub){ return '<div class="bot"><div class="av">🤖</div><div class="bubble">'+(step===0?'<b>'+t("hi")+'</b>':'')+q+(sub?'<div class="sub" style="margin-top:4px">'+sub+'</div>':'')+'</div></div>'; }
 function yn(key, val){ return '<div class="yn">'+[["yes",t("yes")],["no",t("no")],["unsure",t("unsure")]].map(function(o){ return '<button type="button" class="chip'+(val===o[0]?' on':'')+'" data-det="'+key+'" data-val="'+o[0]+'">'+o[1]+'</button>'; }).join("")+'</div>'; }
@@ -359,6 +365,7 @@ function done(){
   window.scrollTo(0,0);
 }
 draw();
+if("serviceWorker" in navigator && location.hostname==="talli3d.github.io" && location.pathname.indexOf("/talli/")!==0) navigator.serviceWorker.register("/sw.js").catch(function(){});
 </script>
 </body>
 </html>
