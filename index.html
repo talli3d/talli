@@ -73,6 +73,31 @@ label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
 <script>
 // Replies are submitted to the Talli Google Form in the background (no sign-in needed).
 var FORM = "https://docs.google.com/forms/d/e/1FAIpQLSeVXoesgCeUuPyGDBgYoTJ_YbI-7hSQ5nJ9HYcwZXopEHimzg/formResponse";
+// a short encrypted "client replied" note to the Talli link store, so Talli's laptop can alert at once (only Talli's private key can read it)
+var TALLI_KEY = {"kty":"EC","crv":"P-256","x":"4c95rbe-gcnPKVX79-iny1jPz8r8NBkn8CEuzBY7bRc","y":"xRq6RaR4fIRFPZqyHIclVnlsO9DGf_SPN4lZ-PTxBA0"};
+var STORE_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSe5gfmV0amFX-zM1GPi7EsPbuITcDwwCSThS9shpLYF-f63Fw/formResponse", STORE_ID = "entry.448647656", STORE_DATA = "entry.1838359332";
+function tellTalli(kind, resp, name){
+  try{
+    if(!window.crypto || !crypto.subtle) return;
+    var b64 = function(buf){ var u = new Uint8Array(buf), x = ""; for(var i = 0; i < u.length; i++) x += String.fromCharCode(u[i]); return btoa(x); };
+    var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", r = crypto.getRandomValues(new Uint32Array(8)), id = "";
+    for(var i = 0; i < 8; i++) id += A[r[i] % A.length];
+    var msg = JSON.stringify({v:1, k:kind, n:D.n, c:D.c || "", r:resp, by:name, at:new Date().toISOString()});
+    crypto.subtle.importKey("jwk", TALLI_KEY, {name:"ECDH", namedCurve:"P-256"}, false, []).then(function(pub){
+      return crypto.subtle.generateKey({name:"ECDH", namedCurve:"P-256"}, true, ["deriveKey"]).then(function(eph){
+        return crypto.subtle.deriveKey({name:"ECDH", public:pub}, eph.privateKey, {name:"AES-GCM", length:256}, false, ["encrypt"]).then(function(key){
+          var iv = crypto.getRandomValues(new Uint8Array(12));
+          return Promise.all([crypto.subtle.encrypt({name:"AES-GCM", iv:iv}, key, new TextEncoder().encode(msg)), crypto.subtle.exportKey("jwk", eph.publicKey)]).then(function(res){
+            var body = new URLSearchParams();
+            body.append(STORE_ID, "a:" + id);
+            body.append(STORE_DATA, JSON.stringify({v:1, epk:{kty:"EC", crv:"P-256", x:res[1].x, y:res[1].y}, iv:b64(iv), ct:b64(res[0])}));
+            return fetch(STORE_FORM, {method:"POST", mode:"no-cors", body:body});
+          });
+        });
+      });
+    }).catch(function(){});
+  }catch(e){}
+}
 var E = {no:"entry.903784828", code:"entry.1026344090", name:"entry.165134816", resp:"entry.77146658", notes:"entry.1927469888"};
 
 function readData(){
@@ -155,6 +180,7 @@ function invoicePage(){
     body.append(E.no, D.n); body.append(E.code, D.c || ""); body.append(E.name, (nameVal || "").trim() || D.cn || "Client");
     body.append(E.resp, pick.paid ? "Payment sent" : "Order received"); body.append(E.notes, notes.join("\n").slice(0, 1800));
     b.disabled = true; b.textContent = t("sending");
+    tellTalli("i", pick.paid ? "Payment sent" : "Order received", (nameVal || "").trim() || D.cn || "Client");
     fetch(FORM, {method:"POST", mode:"no-cors", body: body})
       .then(function(){ sent = true; bar.remove();
         var msg = pick.paid ? t("thxPaid", D.n) : t("thxGot");
@@ -246,6 +272,7 @@ if(!D){
     body.append(E.resp, changes.length ? "Request changes" : "Approve as quoted"); body.append(E.notes, notes.slice(0, 1800));
 
     b.disabled = true; b.textContent = t("sending");
+    tellTalli("q", changes.length ? "Request changes" : "Approve as quoted", (nameVal || "").trim() || D.cn || "Client");
     fetch(FORM, {method:"POST", mode:"no-cors", body: body})
       .then(function(){ sent = true; done(changes.length); })
       .catch(function(){ b.disabled = false; b.textContent = t("tryAgain"); drawBar(t("cantSend")); });
